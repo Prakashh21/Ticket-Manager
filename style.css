@@ -108,6 +108,10 @@ background-color: white;
     background-color: yellow;
 }
 
+.deleteSelected{
+    border: 5px black solid;
+}
+
 /* Grid Starts Here */
 
 .modal{
