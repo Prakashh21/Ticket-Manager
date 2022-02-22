@@ -5,6 +5,11 @@ let colors = ["red","green","blue","yellow"];
 let deleteButton  = document.querySelector(".buttons2");
 let deleteMode = false;
 
+if(localStorage.getItem("AllTickets") == undefined){
+    let allTickets = {};
+    allTickets = JSON.stringify(allTickets);
+    localStorage.setItem("AllTickets",allTickets);  
+}
 
 deleteButton.addEventListener("click", function(event){
    if(event.currentTarget.classList.contains("deleteSelected")){
@@ -21,8 +26,6 @@ deleteButton.addEventListener("click", function(event){
 
 
 addBtn.addEventListener("click", function(){
-   
-
     if(deleteMode){
         deleteButton.classList.remove("deleteSelected");
         deleteMode = false;
@@ -79,21 +82,62 @@ taskInnerContainer.addEventListener("keydown", function (event){
    if (event.key == "Enter"){
     //    console.log(event.currentTarget.innerText);
         // console.log(Color);
+        let id = uid();
+        let task = event.currentTarget.innerText;
+
+
+        
+
+        
+
+        // step 1 -- Jo bhi data local storage me hai usko lekar aao 
+
+        let fetch = JSON.parse(localStorage.getItem("AllTickets")); // storage me object as a string stored rahega so humlog ko usko wapas se object me convert karna padega to push our ticket objects into it.
+        
+        
+     
+        // step 2 -- usko update karo
+
+                   
+        // we have 3 ingredients required to create ticket object ready
+        // 1) id 2) color 3) data
+        // now we will create a object out of it that would represent a ticket
+
+        let ticketObj = {
+            color:Color,
+            taskValue:task,
+        }
+        fetch[id] = ticketObj; // fetch ke naam se save kiya hua object humlog retrieve kiye fir key ke jagah id daal ke usko save kar diye.
+
+
+        // step 3 -- wapas updated object ko local storage me save kar do.
+
+        localStorage.setItem("AllTickets",JSON.stringify(fetch));
+
+        // wo object ko save kar do but since it only stores strings first we need to convert it to string using JSON.stringify(object).
+
+
         div.remove();
         
-        let id = uid();
+        
         let template = document.createElement("div");
         template.classList.add("ticket");
 
-        template.innerHTML = `<div class="ticketColor ${Color}"></div>
+        template.setAttribute("data-id",id);
+
+        template.innerHTML = `<div data-id="${id}" class="ticketColor ${Color}"}></div>
         <div class="ticketId">${id}</div>
-        <div class="ticketContent">${event.currentTarget.innerText}</div>`
+        <div ticket-id="${id}" class="ticketContent" contenteditable="true">${task}</div>`
         
         // added delete mode functionality
 
         template.addEventListener("click",function(event){
             if(deleteMode){
                 event.currentTarget.remove();
+               let currentTicketId = event.currentTarget.getAttribute("data-id");
+               let allTickets = JSON.parse(localStorage.getItem("AllTickets"));
+               delete allTickets[currentTicketId];
+               localStorage.setItem("AllTickets",JSON.stringify(allTickets));        
             }
         });
 
@@ -101,7 +145,25 @@ taskInnerContainer.addEventListener("keydown", function (event){
 
         // color changing logic
         let ticketColorDiv = template.querySelector(".ticketColor");
+        
+        // adding functonality such that the editing tickets gets reflected inside the storage aswell
+    
+        let ticketContentDiv = template.querySelector(".ticketContent");
+         
+        ticketContentDiv.addEventListener("input",function(event){
+           let currentTask = event.currentTarget.innerText;
+           let currentId  = event.currentTarget.getAttribute("ticket-id");
+           let fetch = JSON.parse(localStorage.getItem("AllTickets"));
+           fetch[currentId].taskValue = currentTask;
+           localStorage.setItem("AllTickets",JSON.stringify(fetch));
+                 });
+
+//////////////////////////////////////////////////////////////////////// 
         ticketColorDiv.addEventListener("click",function(event){
+
+            let currentID = event.currentTarget.getAttribute("data-id"); //fetching the id of though attribute
+            
+
             let currentColor = event.currentTarget.classList[1];
             let index = -1;
             for (let i =0 ; i < colors.length ; i++){
@@ -111,6 +173,16 @@ taskInnerContainer.addEventListener("keydown", function (event){
                 index++;
                 index = index%4;
                 let newColor = colors[index];
+                
+                // writing the code to save the changed color inside the the storage.
+                let fetch = JSON.parse(localStorage.getItem("AllTickets")); // step-1 // fetching the tickets and converting them into objects.
+                
+                fetch[currentID].color = newColor;   // step-2 // updating it inside the storage
+
+                localStorage.setItem("AllTickets",JSON.stringify(fetch)); // step -3 // saving the updated object inside the document -- since it only stores string hence converting it into string from object.
+
+
+                /////////////////////////////////////////////////////
                 ticketColorDiv.classList.remove(currentColor);
                 ticketColorDiv.classList.add(newColor);    
              }
