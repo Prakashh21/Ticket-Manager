@@ -5,11 +5,30 @@ let colors = ["red","green","blue","yellow"];
 let deleteButton  = document.querySelector(".buttons2");
 let deleteMode = false;
 
+let allFiltersChildren = document.querySelectorAll(".filters div");
+for(let i = 0 ; i <allFiltersChildren.length;i++){
+    allFiltersChildren[i].addEventListener("click",function(e){
+        if(e.currentTarget.classList.contains("color-selected")){
+            e.currentTarget.classList.remove("color-selected");
+            loadTasks();
+            return;
+        }else{
+            e.currentTarget.classList.add("color-selected"); 
+        }
+        let filterColor = e.currentTarget.classList[0];
+        loadTasks(filterColor)
+    });
+}
+
 if(localStorage.getItem("AllTickets") == undefined){
     let allTickets = {};
     allTickets = JSON.stringify(allTickets);
     localStorage.setItem("AllTickets",allTickets);  
 }
+
+
+
+loadTasks();
 
 deleteButton.addEventListener("click", function(event){
    if(event.currentTarget.classList.contains("deleteSelected")){
@@ -120,6 +139,8 @@ taskInnerContainer.addEventListener("keydown", function (event){
         div.remove();
         
         
+        // creating a ticket div below
+
         let template = document.createElement("div");
         template.classList.add("ticket");
 
@@ -186,10 +207,11 @@ taskInnerContainer.addEventListener("keydown", function (event){
                 ticketColorDiv.classList.remove(currentColor);
                 ticketColorDiv.classList.add(newColor);    
              }
-        })
+        });
         grid.append(template);
+        div.remove();
    }else if(event.key === "Escape"){
-       div.remove();
+    div.remove();
    }
 
   
@@ -200,4 +222,107 @@ div.classList.add("modal");
 body.append(div);
 });
 
+function loadTasks(color){
+
+    let ticketsOnUi = document.querySelectorAll(".ticket")
+
+    for(let i = 0 ; i <ticketsOnUi.length;i++){
+        ticketsOnUi[i].remove();
+    }
+
+
+    // fetch all tickets data
+
+let allTicketsData = JSON.parse(localStorage.getItem("AllTickets"));
+
+// create ticket ui for each ticket object 
+for (x in allTicketsData) {
+
+    let currentTicketId = x;
+    let singleTicketObject = allTicketsData[x];
+        
+        if(color && color !== singleTicketObject.color)continue;
     
+        let template = document.createElement("div");
+        template.classList.add("ticket");
+
+        template.setAttribute("data-id",currentTicketId);
+
+        template.innerHTML = `<div data-id="${currentTicketId}" class="ticketColor ${singleTicketObject.color}"}></div>
+        <div class="ticketId">${currentTicketId}</div>
+        <div ticket-id="${currentTicketId}" class="ticketContent" contenteditable="true">${singleTicketObject.taskValue}</div>`
+        
+        let ticketColorDiv = template.querySelector(".ticketColor");
+        
+        let ticketContentDiv = template.querySelector(".ticketContent");
+         
+                
+        ticketContentDiv.addEventListener("input",function(event){
+            let currentTask = event.currentTarget.innerText;
+            let currentId  = event.currentTarget.getAttribute("ticket-id");
+            let fetch = JSON.parse(localStorage.getItem("AllTickets"));
+            fetch[currentId].taskValue = currentTask;
+            localStorage.setItem("AllTickets",JSON.stringify(fetch));
+                  });
+ 
+ //////////////////////////////////////////////////////////////////////// 
+         ticketColorDiv.addEventListener("click",function(event){
+ 
+             let currentID = event.currentTarget.getAttribute("data-id"); //fetching the id of the ticket through attribute
+             
+ 
+             let currentColor = event.currentTarget.classList[1];
+             let index = -1;
+             for (let i =0 ; i < colors.length ; i++){
+                 if (colors[i] == currentColor){
+                 index = i;
+             }
+                 index++;
+                 index = index%4;
+                 let newColor = colors[index];
+                 
+                 // writing the code to save the changed color inside the the storage.
+                 let fetch = JSON.parse(localStorage.getItem("AllTickets")); // step-1 // fetching the tickets and converting them into objects.
+                 
+                 fetch[currentID].color = newColor;   // step-2 // updating it inside the storage
+ 
+                 localStorage.setItem("AllTickets",JSON.stringify(fetch)); // step -3 // saving the updated object inside the document -- since it only stores string hence converting it into string from object.
+ 
+ 
+                 /////////////////////////////////////////////////////
+                 ticketColorDiv.classList.remove(currentColor);
+                 ticketColorDiv.classList.add(newColor);    
+              }
+              
+         });
+         
+        template.addEventListener("click",function(event){
+            if(deleteMode){
+                event.currentTarget.remove();
+               let currentTicketId = event.currentTarget.getAttribute("data-id");
+               let allTickets = JSON.parse(localStorage.getItem("AllTickets"));
+               delete allTickets[currentTicketId];
+               localStorage.setItem("AllTickets",JSON.stringify(allTickets));        
+            }
+        });
+
+        grid.append(template);
+
+}
+// attach required event listeners 
+// add tickets in the grid section of ui
+
+
+}
+
+// loadTickets 
+// on start (refresh/new tab/ browser reopen) of the app
+// it will fetch the tickets data 
+// create those tickets on ui 
+// after creating ui will also attach the required event listners 
+//
+// on click the filter 
+// previously jo ticket hai unhe delete maarna hai 
+// if jo color hum usse denge us color ke tickets load karega sirf and if now color then saare 
+//
+//
